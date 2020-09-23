@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Web3 from 'web3';
 import SimpleStorageABI from '../contracts/simpleStorage.json'
+import { account } from '../constants'
 
 function SimpleStorage() {
   const [inputValue, setInputValue] = useState('')
@@ -10,13 +11,9 @@ function SimpleStorage() {
 
   // truffle migrate
   // contract address:
-  const address = '0xcCB0e28D65a326C7EFf3A4992D049E4A2d9C1864'
+  const address = '0xCFD8C35F967AB91F1D72ea4C0cA229de36E430D1'
   const contract = new web3.eth.Contract(SimpleStorageABI, address);
   contract.setProvider(web3.currentProvider)
-
-  // ganache-cli
-  // Available Accounts[0]:
-  const account = '0x42307D29D1bb4d74c2069E254C6f3534c541896A'
 
   const getValue = () => {
     contract.methods.get().call().then(console.log)
@@ -35,7 +32,7 @@ function SimpleStorage() {
   return (
     <div className="App">
       <input type="text" onChange={(e) => captureInputValue(e)} />
-      <a onClick={add}>Click me!</a>
+      <button onClick={add}>Click me!</button>
     </div>
   );
 }
