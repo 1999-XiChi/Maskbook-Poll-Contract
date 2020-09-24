@@ -2,28 +2,38 @@ import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 import PollABI from '../contracts/poll.json'
 import { account } from '../constants'
+// set web3 provider
+const web3 = new Web3(new
+  Web3.providers
+    .HttpProvider("http://localhost:8545"));
+const address = '0x82b917E3117E6E3fb6031bd4167797Ec378C20A4'
+const contract = new web3.eth.Contract(PollABI, address);
+contract.setProvider(web3.currentProvider);
 
 function Poll() {
   const [question, setQuestion] = useState('')
   const [option0, setOption0] = useState('')
   const [option1, setOption1] = useState('')
-  // set web3 provider
-  const web3 = new Web3(new
-    Web3.providers
-      .HttpProvider("http://localhost:8545"));
-  const address = '0x088F2faf9169d98641Ec0DD1349E7D38Ff719dCb'
-  const contract = new web3.eth.Contract(PollABI, address);
-  contract.setProvider(web3.currentProvider);
+  const [polls, setPolls] = useState([])
   // get polls id
   useEffect(() => {
-    let PollsId = [];
-    contract.methods.getPollsId().call().then((data) => {
-      PollsId = data;
-      PollsId.map(id => {
-        contract.methods.getPollById(id).call().then(console.log)
-      })
-    })
+    getAllPolls()
   }, [])
+
+  const getAllPolls = async () => {
+    const PollsId = await contract.methods.getPollsId().call();
+    let tempPolls = [];
+    await PollsId.map(async (id) => {
+      const { question, _options, results } = await contract.methods.getPollById(id).call();
+      let poll = {
+        question,
+        results,
+        options: _options
+      }
+      tempPolls.push(poll)
+    })
+    setPolls(tempPolls)
+  }
 
   const createNewPoll = e => {
     e.preventDefault()
@@ -32,6 +42,7 @@ function Poll() {
       const { id, question } = res.events.CreationSuccess.returnValues
       console.log(id, question)
     })
+    getAllPolls()
   }
 
   return (
@@ -49,6 +60,23 @@ function Poll() {
         <br />
         <button onClick={createNewPoll}>Send A New Poll</button>
       </form>
+      <div style={{ marginTop: '100px' }}>
+        {polls.map((poll, index) => (
+          <div key={index}>
+            <div>{poll.question}</div>
+            <ul>
+              {
+                poll.options ? poll.options.map((option, oIndex) => (
+                  <li key={oIndex} style={{ display: 'flex', justifyContent: 'space-between', width: '500px' }}>
+                    <span>{option}</span>
+                    {poll.results ? <span>{poll.results[oIndex]}</span> : null}
+                  </li>
+                )) : null
+              }
+            </ul>
+            <hr />
+          </div>))}
+      </div>
     </div>
   );
 }
